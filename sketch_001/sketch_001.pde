@@ -1,104 +1,5 @@
-class CentralControlSystem { //<>//
-
-  //  class variables
-  private int[][] itemPrice;
-  private int[][] itemQuantity;
-  private int[][] currentSelection;
-
-  private boolean operatingMode = false;
-  private boolean requestCoinReturn = false;
-
-  private String storedAccessCode = null;
-  private String accessCode = null;
-
-  private float totalCredit;
-
-  //  constructor for CentralControl
-  CentralControlSystem() {
-
-    //print("test of object creation");
-    this.storedAccessCode = "super-secure-pass";
-    this.itemPrice = new int[4][4];
-    this.itemQuantity = new int[4][4];
-    this.currentSelection = new int[3][3];
-
-
-    itemPrice[1][1] = 60;
-    itemPrice[1][2] = 75;
-    itemPrice[1][3] = 90;
-
-    itemPrice[2][1] = 50;
-    itemPrice[2][2] = 45;
-    itemPrice[2][3] = 55;    
-
-    itemPrice[3][1] = 70;
-    itemPrice[3][2] = 80;
-    itemPrice[3][3] = 95;
-
-    this.totalCredit = 0.0;
-  }
-
-  public String addCredit(int credit) {
-    totalCredit += credit;
-    return ("CREDIT " +  nf(totalCredit/100, 0, 2));
-    //print("total credit: ", totalCredit);
-  }
-
-  public float getCredit() {
-    return totalCredit/100;
-    //print("total credit: ", totalCredit);
-  }
-
-  public String vendItem(String itemSelected, int ltrSel, int numSel) {
-    //print("selection " + ltrSel + " " + numSel);
-    int selItemPrice = itemPrice[ltrSel][numSel];
-    if (totalCredit == 0.0) {
-      return (itemSelected + " PRICE: " +  nf(selItemPrice/100, 0, 2) );
-    } else if (totalCredit < selItemPrice) {
-      return (itemSelected + " PRICE: " +  nf(selItemPrice/100, 0, 2) + "\nADD ") + (nf(((selItemPrice - totalCredit)/100), 0, 2));
-    } else {
-      totalCredit -= selItemPrice;
-      return ("VENDING: " +  itemSelected + "\nCHANGE " + nf(totalCredit/100, 0, 2));
-    }
-  }
-}
-
-class CoinMechanism {
-  private int[] coinsInTube;
-  private float totalCoinValue;
-
-  CoinMechanism() {
-    this.coinsInTube = new int[4];
-    this.coinsInTube[0] = 10; // initial nickel count is 10
-    this.coinsInTube[1] = 10; // initial nickel count is 10
-    this.coinsInTube[2] = 10; // initial nickel count is 10
-    this.coinsInTube[3] = 10; // initial nickel count is 10
-
-    totalCoinValue = 0.0;
-  }
-
-  public void insertCoin(int coinValue) {
-    totalCoinValue += coinValue;
-    //print("coin total = ", totalCoinValue);
-  }
-}
-
-class BillAcceptor {
-  private int billInUnit;
-  private float totalBillValue;
-
-  BillAcceptor() {
-    this.billInUnit = 0;
-
-    totalBillValue = 0.0;
-  }
-
-  public void insertBill(int billValue) {
-    totalBillValue += billValue;
-    //print("bill total = ", totalBillValue);
-  }
-}
-
+ //<>//
+import processing.sound.*;
 boolean letterSelected = false;
 boolean numberSelected = false;
 boolean selectionMade = false;
@@ -138,6 +39,7 @@ boolean overQuarter = false;
 boolean overDollar = false;
 boolean over1Bill = false;
 boolean over5Bill = false;
+boolean overLever = false;
 
 float totalMoneyValue;
 
@@ -147,7 +49,181 @@ String currentMessage = "INSERT MONEY";
 String str;
 PFont fontInfo = null;
 
+SoundFile coinDrop;
+SoundFile billAccept;
+SoundFile returnCoin;
+SoundFile pressButton;
+SoundFile motor;
+SoundFile lever;
+
+
+
+//  ==========================================================  //
+//                 CENTRAL CONTROL SYSTEM CLASS                 //
+
+
+class CentralControlSystem {
+  
+  
+  private int[][] itemPrice;
+  private int[][] itemQuantity;
+  private String[][] itemName;
+
+  private boolean operatingMode = false;
+  private boolean requestCoinReturn = false;
+
+  private String storedAccessCode = null;
+  private String accessCode = null;
+
+  private float totalCredit;
+  
+
+
+  //  public constructor for the CentralControlSystem
+  public CentralControlSystem() {
+
+    storedAccessCode = "super-secure-pass";
+    itemPrice = new int[4][4];
+    itemQuantity = new int[4][4];
+
+    itemPrice[1][1] = 60;
+    itemPrice[1][2] = 75;
+    itemPrice[1][3] = 90;
+
+    itemPrice[2][1] = 50;
+    itemPrice[2][2] = 45;
+    itemPrice[2][3] = 55;    
+
+    itemPrice[3][1] = 70;
+    itemPrice[3][2] = 80;
+    itemPrice[3][3] = 95;
+    
+    itemQuantity[1][1] = 10;
+    itemQuantity[1][2] = 10;
+    itemQuantity[1][3] = 10;
+    
+    itemQuantity[2][1] = 10;
+    itemQuantity[2][2] = 10;
+    itemQuantity[2][3] = 10;
+    
+    itemQuantity[3][1] = 10;
+    itemQuantity[3][2] = 10;
+    itemQuantity[3][3] = 10;
+    
+    totalCredit = 0.0;
+    
+  }
+  
+
+  //  public method addCredit for CentralControlSystem
+  public String addCredit(int credit) {
+    
+    totalCredit += credit;
+    return ("CREDIT " +  nf(totalCredit/100, 0, 2));
+    
+  }
+  
+
+  //  public method getCredit for CentralControlSystem
+  public float getCredit() {
+    
+    return totalCredit/100;
+    
+  }
+
+
+  //  public method vendItem for CentralControlSystem
+  public String vendItem(String itemSelected, int ltrSel, int numSel, SoundFile sound) {
+    
+    float selItemPrice = itemPrice[ltrSel][numSel];
+    
+    if (totalCredit == 0.0) {
+      
+      return (itemSelected + " PRICE: " +  nf(selItemPrice/100, 0, 2) );
+      
+    } else if (totalCredit < selItemPrice) {
+      
+      return (itemSelected + " PRICE: " +  nf(selItemPrice/100, 0, 2) + "\nADD ") + (nf(((selItemPrice - totalCredit)/100), 0, 2));
+      
+    } else {
+      
+      totalCredit -= selItemPrice;
+      sound.play();
+      return ("VENDING: " +  itemSelected + "\nCHANGE " + nf(totalCredit/100, 0, 2));
+      
+    }
+  }
+}
+
+
+//  ==========================================================  //
+//          COIN MECHANISM CLASS                                //
+
+
+class CoinMechanism {
+  
+  private int[] coinsInTube;
+  private float totalCoinValue;
+
+  //  public constructor for CoinMechanism
+  public CoinMechanism() {
+    
+    coinsInTube = new int[4];
+    coinsInTube[0] = 10; // initial nickel count is 10
+    coinsInTube[1] = 10; // initial nickel count is 10
+    coinsInTube[2] = 10; // initial nickel count is 10
+    coinsInTube[3] = 10; // initial nickel count is 10
+
+    totalCoinValue = 0.0;
+    
+  }
+
+
+  //  public method insertCoin for CoinMechanism class
+  public void insertCoin(int coinValue) {
+    
+    totalCoinValue += coinValue;
+    
+  }
+
+}
+
+
+//  ==========================================================  //
+//                      BILL ACCEPTOR CLASS                     //
+
+class BillAcceptor {
+  
+  private int billInUnit;
+  private float totalBillValue;
+
+
+  //  public constructor for BillAcceptor
+  BillAcceptor() {
+    
+    billInUnit = 0;
+
+    totalBillValue = 0.0;
+    
+  }
+
+
+  //  public method insertBill for BillAcceptor
+  public void insertBill(int billValue) {
+    
+    totalBillValue += billValue;
+    
+  }
+}
+
+
+//  ==========================================================  //
+//                      MAIN BODY OF PROGRAM                    //
+
+
+//  setup method for main body of program
 void setup() {
+  
   size(680, 720);  
 
   ccs = new CentralControlSystem();
@@ -179,9 +255,20 @@ void setup() {
 
   drawVendingMachine();
   drawMessageDisplay();
+  
+  coinDrop = new SoundFile(this, "coindrop.mp3");
+  billAccept = new SoundFile(this, "billaccepted.mp3");
+  returnCoin = new SoundFile(this, "changereturned2.mp3");
+  pressButton = new SoundFile(this, "button.wav");
+  motor = new SoundFile(this, "motor.wav");
+  lever = new SoundFile(this, "lever.wav");
+  
 }
 
+
+//  drawVendingMachine method for main body of program
 void drawVendingMachine() {
+  
   //make background black
   stroke(0);
   fill(0);
@@ -242,7 +329,6 @@ void drawVendingMachine() {
   image(act2, 242, 98, 48, 70);
   image(yogurt, 334, 103, 52, 65);
 
-
   image(famous, 146, 264, 54, 54);
   image(knotts, 242, 258, 55, 60);
   image(grandmas, 334, 264, 53, 54);
@@ -267,7 +353,6 @@ void drawVendingMachine() {
   rect(460, 238, 82, 12);
   fill(102, 102, 102);
   rect(463, 242, 76, 5);
-
 
   //draw the buttons (A, B, C, D, 1, 2, 3, 4)
   fill(150, 63, 45);
@@ -301,13 +386,21 @@ void drawVendingMachine() {
   textFont(fontBig);
   fill(180, 33, 10);
   text("P U S H", 215, 590);
+  
 }
 
+
+//  checkMousePosition method for main body of program
 boolean checkMousePosition(int x1, int y1, int x2, int y2) {
+  
   return (mouseX > x1 && mouseY > y1 && mouseX < x2 && mouseY < y2);
+  
 }
 
+
+//  draw method for main body of program
 void draw() {
+  
   drawVendingMachine();
   drawMessageDisplay();
 
@@ -357,32 +450,59 @@ void draw() {
   rect(560, 420, 114, 25, 10);
   fill(0);
   text("CCS Access Button", 565, 437);
+  
 }
 
+
+//  drawNickel method for main body of program
 void drawNickel(float x, float y) {
+  
   image(nickel, x, y, 55, 55);
+  
 }
 
+
+//  drawDime method for main body of program
 void drawDime(float x, float y) {
+  
   image(dime, x, y, 40, 40);
+  
 }
 
+
+//  drawQuarter method for main body of program
 void drawQuarter(float x, float y) {
+  
   image(quarter, x, y, 51, 52);
+  
 }
 
+
+//  drawDollar method for main body of program
 void drawDollar(float x, float y) {
+  
   image(dollar, x, y, 61, 60);
+  
 }
 
+
+//  drawBill method for main body of program
 void draw1Bill(float x, float y) {
+  
   image(bill1, x, y);
+  
 }
 
+
+//  draw5Bill method for main body of program
 void draw5Bill(float x, float y) {
+  
   image(bill5, x, y);
+  
 }
 
+
+//  drawMessageDisplay method for main body of program
 void drawMessageDisplay() {
   //draw the display panel for the machine
   stroke(125);
@@ -395,113 +515,195 @@ void drawMessageDisplay() {
   text(currentMessage, 456, 154);
 }
 
+
+//  updateSelection method for main body of program
 void updateSelection (int btn2Display) {
-  if (selectionMade == true)
+  
+  if (selectionMade == true) {
     return;
+  }
 
   currentMessage = currentMessage + btn2Display;
   drawMessageDisplay();
 
-  if (letterSelected && numberSelected)
-  {
+  if (letterSelected && numberSelected) {
+    
     selectionMade = true;
-    currentMessage = ccs.vendItem(currentMessage, numLetterSel, numNumberSel);
+    currentMessage = ccs.vendItem(currentMessage, numLetterSel, numNumberSel, motor);
     selectionMade = false;
     letterSelected = false;
     numberSelected = false;
+    
   }
 }
 
+
+//  buttonAOver method for main body of program
 boolean buttonAOver() {
+  
   return (mouseX >= 482 && mouseX <= 500 && mouseY >= 270 && mouseY <= 288);
+  
 }
 
 boolean buttonBOver() {
+  
   return (mouseX >= 482 && mouseX <= 500 && mouseY >= 292 && mouseY <= 310);
+  
 }
 
 boolean buttonCOver() {
+  
   return (mouseX >= 482 && mouseX <= 500 && mouseY >= 314 && mouseY <= 332);
+  
 }
 
 boolean button1Over() {
+  
   return (mouseX >= 504 && mouseX <= 522 && mouseY >= 270 && mouseY <= 288);
+  
 }
 
 boolean button2Over() {
+  
   return (mouseX >= 504 && mouseX <= 522 && mouseY >= 292 && mouseY <= 310);
+  
 }
 
 boolean button3Over() {
+  
   return (mouseX >= 504 && mouseX <= 522 && mouseY >= 314 && mouseY <= 332);
+  
 }
 
 boolean coinOver() {
+  
   return (mouseX >= 575 && mouseX <= 615 && mouseY >= 170 && mouseY <= 210);
+  
 }
 
+boolean leverOver() {
+  return (mouseX >= 480 && mouseX <= 520 && mouseY >= 410 && mouseY <= 425);
+}
+
+
+//  mousePressed method for main body of program
 void mousePressed() {
+  
   if (!selectionMade) {
+    
     if (buttonAOver()) {
+      
       currentMessage = "A";
       numLetterSel = 1;
       letterSelected = true;
+      pressButton.play();
+      
     } else if (buttonBOver()) {
+      
       currentMessage = "B";
       numLetterSel = 2;
       letterSelected = true;
+      pressButton.play();
+      
     } else if (buttonCOver()) {
+      
       currentMessage = "C";
       numLetterSel = 3;
       letterSelected = true;
+      pressButton.play();
+      
     } 
 
     if (button1Over() && letterSelected == true && numberSelected == false) {
+      
       numNumberSel = 1;
       numberSelected = true;
       updateSelection(1);
+      pressButton.play();
+      
     } else if (button2Over() && letterSelected == true && numberSelected == false) {
+      
       numNumberSel = 2;
       numberSelected = true;
       updateSelection(2);
+      pressButton.play();
+      
     } else if (button3Over() && letterSelected == true && numberSelected == false) {
+      
       numNumberSel = 3;
       numberSelected = true;
       updateSelection(3);
+      pressButton.play();
+      
     }
   }
 
-  if (overDime || overNickel || overQuarter || overDollar || over1Bill || over5Bill ) {
+  if (overDime || overNickel || overQuarter || overDollar || over1Bill || over5Bill || overLever ) {
+    
     locked = true;
+    
   } else {
+    
     locked = false;
+    
   }
+  
 }
 
+
+//  mouseReleased method for main body of program
 void mouseReleased() {
+  
   if (overNickel) {
+    
     coinMech.insertCoin(5);
     currentMessage = ccs.addCredit(5);
+    coinDrop.play();
+    
   }
+  
   if (overDime) {
+    
     coinMech.insertCoin(10);
     currentMessage = ccs.addCredit(10);
+    coinDrop.play();
+    
   }
+  
   if (overQuarter) {
+    
     coinMech.insertCoin(25);
     currentMessage = ccs.addCredit(25);
+    coinDrop.play();
+    
   }
+  
   if (overDollar) {
+    
     coinMech.insertCoin(100);
     currentMessage = ccs.addCredit(100);
+    coinDrop.play();
+    
   }
+  
   if (over1Bill) {
+    
     billAcpt.insertBill(100);
     currentMessage = ccs.addCredit(100);
+    billAccept.play();
+    
   }
+  
   if (over5Bill) {
+    
     billAcpt.insertBill(500);
     currentMessage = ccs.addCredit(500);
+    billAccept.play();
+    
+  }
+  
+  if (overLever) {
+    lever.play();
   }
 
   locked = false;
